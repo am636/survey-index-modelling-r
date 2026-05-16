@@ -1,0 +1,32 @@
+# R session files
+.Rhistory
+.RData
+.Ruserdata
+
+# Raw and derived data
+*.dta
+*.sav
+*.sas7bdat
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.rds
+*.RDS
+*.rda
+*.RData
+
+# Keep documentation placeholders
+!data/README.md
+!outputs/README.md
+
+# Local outputs
+outputs/**
+!outputs/
+!outputs/README.md
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
