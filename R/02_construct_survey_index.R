@@ -2,13 +2,20 @@
 # COMPONENT 2: Survey index construction
 # ============================================================
 
+if (!exists("require_package")) {
+  require_package <- function(pkg) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      stop(sprintf("Package '%s' is required but not installed.", pkg), call. = FALSE)
+    }
+  }
+}
+
 survey_index_config <- function(
     item_source = "usable",
     override_items = NULL,
     yes_values = c(1),
     no_values = c(0),
     missing_values = c(7, 8, 9, 97, 98, 99, 997, 998, 999),
-    other_values_to_na = TRUE,
     strict = FALSE,
     require_both_01 = TRUE,
     min_items_required = 3,
@@ -24,7 +31,6 @@ survey_index_config <- function(
     yes_values = yes_values,
     no_values = no_values,
     missing_values = missing_values,
-    other_values_to_na = other_values_to_na,
     strict = strict,
     require_both_01 = require_both_01,
     min_items_required = min_items_required,
