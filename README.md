@@ -1,8 +1,8 @@
 # Survey index modelling workflow
 
-This repository contains a modular R workflow for working with survey microdata where an analytical index needs to be constructed from multiple binary questionnaire items before modelling. The workflow covers input checks, item recoding, index construction, survey-weighted modelling, mixed-effects sensitivity models, and structured audit outputs.
+This repository contains a modular R workflow for survey microdata where an analytical index is built from several binary questionnaire items before modelling. It covers input checks, item recoding, index construction, survey-weighted regression, mixed-effects sensitivity models, and audit tables for checking each stage of the analysis.
 
-No raw survey data, derived respondent-level data, or project-specific model outputs are stored in this repository.
+The workflow is designed for local survey files. No raw data or generated model outputs are stored in the repository.
 
 ## Workflow summary
 
@@ -24,9 +24,9 @@ The workflow is organised into three components.
 
 3. **Model fitting and reporting**
    - Merge the respondent-level index back into the modelling data using explicit keys.
-   - Apply consistent variable typing through a modelling registry.
-   - Fit a survey-weighted Gaussian model as the main design-aware model.
-   - Fit optional mixed-effects models to examine hierarchical structure and clustering.
+   - Apply consistent variable typing before model fitting.
+   - Fit a survey-weighted regression model using weights, PSUs, and strata where available.
+   - Fit optional mixed-effects models to check clustering or hierarchical structure.
    - Export coefficient tables, model summaries, sample-flow checks, warnings, and audit files.
 
 ## Repository layout
@@ -49,6 +49,19 @@ The workflow is organised into three components.
 ├── LICENSE
 └── .gitignore
 ```
+
+## Suitable input data
+
+The scripts are intended for respondent- or household-level survey data in tabular form. A typical input file contains:
+
+- a unique respondent or household identifier;
+- a cluster or sampling-unit identifier;
+- a survey weight;
+- a strata variable, where available;
+- several binary questionnaire items to be combined into an index;
+- predictors for modelling, such as age, education, wealth, residence type, region, or other study-specific covariates.
+
+The validation and recoding steps assume that the index items can be mapped to `0`, `1`, and missing values. The default recoding covers simple `0/1` items with common special missing codes, but these values can be changed in the configuration.
 
 ## Example use
 
@@ -87,9 +100,9 @@ model_obj <- fit_survey_index_model(
 )
 ```
 
-## Data
+## Data and outputs
 
-The scripts are written for local survey files that the user is allowed to access. Raw data and generated outputs should be kept outside version control unless they are small, anonymised, and explicitly shareable.
+Raw survey files should be kept locally and should only be shared when the data licence allows it. The same applies to respondent-level index scores and fitted-model outputs.
 
 The `.gitignore` file excludes common raw-data and output formats such as `.dta`, `.sav`, `.csv`, `.rds`, `.RData`, and generated output folders.
 
@@ -98,7 +111,7 @@ The `.gitignore` file excludes common raw-data and output formats such as `.dta`
 Core packages depend on which parts of the workflow are used:
 
 - `haven` for reading Stata survey files;
-- `survey` for design-aware model fitting;
+- `survey` for survey-weighted model fitting;
 - `lme4` for mixed-effects models;
 - `psych` for tetrachoric index construction, if that option is used.
 
