@@ -1,32 +1,38 @@
-# Survey Index Modelling in R
+# Survey index modelling workflow
 
-Reusable R workflow for validating survey microdata, constructing respondent-level indices from binary survey items, and fitting design-aware and multilevel sensitivity models.
+This repository contains a modular R workflow for working with survey microdata where an analytical index needs to be constructed from multiple binary questionnaire items before modelling. The workflow covers input checks, item recoding, index construction, survey-weighted modelling, mixed-effects sensitivity models, and structured audit outputs.
 
-This repository is intended as a public portfolio template. It does **not** include raw survey data, derived respondent-level data, or project-specific model outputs.
+No raw survey data, derived respondent-level data, or project-specific model outputs are stored in this repository.
 
-## Why this repository exists
+## Workflow summary
 
-Many applied research projects use complex individual- or household-level survey data where the analytical outcome is not available directly, but must be constructed from multiple questionnaire items. This workflow demonstrates how to organise that process in a reproducible and auditable way.
+The workflow is organised into three components.
 
-The workflow is deliberately general. It can be adapted to survey-based projects in population research, health geography, development studies, environmental social science, policy analysis, and applied quantitative research.
+1. **Survey input validation**
+   - Read a local survey microdata file.
+   - Standardise variable names where needed.
+   - Check required identifier, weight, cluster, and strata fields.
+   - Inspect candidate binary survey items and record whether they contain usable response variation.
+   - Return a structured validation object for later stages.
 
-## Workflow
+2. **Survey index construction**
+   - Recode selected binary items into a common `0 / 1 / NA` structure.
+   - Audit missing values, unexpected codes, item variation, and complete-case availability.
+   - Build an analysis-ready item matrix.
+   - Estimate a respondent-level index using either PCA or a tetrachoric one-factor approach.
+   - Keep score orientation explicit so that the direction of the index is documented.
 
-The repository is organised as a three-stage workflow:
+3. **Model fitting and reporting**
+   - Merge the respondent-level index back into the modelling data using explicit keys.
+   - Apply consistent variable typing through a modelling registry.
+   - Fit a survey-weighted Gaussian model as the main design-aware model.
+   - Fit optional mixed-effects models to examine hierarchical structure and clustering.
+   - Export coefficient tables, model summaries, sample-flow checks, warnings, and audit files.
 
-1. **Validate survey input**  
-   Read a survey microdata file, standardise names, check required identifiers, inspect candidate binary survey items, and return a structured validation object.
-
-2. **Construct a survey index**  
-   Recode selected binary items into a consistent `0 / 1 / NA` structure, audit missingness and unexpected codes, build an analysis-ready item matrix, and construct a respondent-level index using PCA or a tetrachoric one-factor approach.
-
-3. **Fit survey index models**  
-   Merge the index back into the analysis data, type modelling variables using an explicit registry, fit a survey-weighted model as the primary design-aware analysis, and optionally fit mixed-effects models as exploratory multilevel sensitivity checks.
-
-## Repository structure
+## Repository layout
 
 ```text
-survey-index-modelling-r/
+.
 ├── R/
 │   ├── 01_validate_survey_input.R
 │   ├── 02_construct_survey_index.R
@@ -34,8 +40,7 @@ survey-index-modelling-r/
 ├── examples/
 │   └── example_workflow.R
 ├── docs/
-│   ├── workflow_overview.md
-│   └── portfolio_summary.md
+│   └── workflow_overview.md
 ├── data/
 │   └── README.md
 ├── outputs/
@@ -45,26 +50,7 @@ survey-index-modelling-r/
 └── .gitignore
 ```
 
-## Skills demonstrated
-
-- Survey microdata validation
-- Defensive data-cleaning workflow design
-- Binary item recoding and audit trails
-- Respondent-level index construction
-- PCA-based dimensionality reduction
-- Optional tetrachoric factor-analysis workflow
-- Survey-weighted modelling
-- Mixed-effects sensitivity analysis
-- Explicit handling of clustering, strata, and weights
-- Reproducible reporting outputs
-
-## Data policy
-
-No data are included in this repository. The scripts are designed to be reusable with appropriately licensed survey microdata supplied locally by the user.
-
-The `.gitignore` file excludes common raw-data and output formats, including `.dta`, `.sav`, `.csv`, `.rds`, `.RData`, and generated output folders.
-
-## Minimal usage pattern
+## Example use
 
 ```r
 source("R/01_validate_survey_input.R")
@@ -75,6 +61,7 @@ validation <- validate_survey_input(
   file_path = "path/to/local_survey_file.dta",
   config = survey_validation_config(
     required_ids = c("cluster_id", "household_id", "respondent_id", "weight"),
+    optional_vars = c("psu", "strata", "region", "urban_rural"),
     candidate_items = c("item_a", "item_b", "item_c", "item_d")
   )
 )
@@ -82,7 +69,8 @@ validation <- validate_survey_input(
 index_obj <- construct_survey_index(
   validation,
   config = survey_index_config(
-    override_items = c("item_a", "item_b", "item_c", "item_d")
+    override_items = c("item_a", "item_b", "item_c", "item_d"),
+    method = "pca"
   )
 )
 
@@ -93,15 +81,26 @@ model_obj <- fit_survey_index_model(
   predictors = c("age", "education", "wealth", "urban_rural", "region"),
   ids = survey_design_ids(
     weight = "weight",
-    psu = "cluster_id",
-    strata = "strata_id"
+    psu = "psu",
+    strata = "strata"
   )
 )
 ```
 
-## Notes on interpretation
+## Data
 
-The survey-weighted model is the primary design-aware branch. Mixed-effects models are included as exploratory sensitivity checks for hierarchical structure. They should not be interpreted as a direct replacement for full survey-design inference.
+The scripts are written for local survey files that the user is allowed to access. Raw data and generated outputs should be kept outside version control unless they are small, anonymised, and explicitly shareable.
+
+The `.gitignore` file excludes common raw-data and output formats such as `.dta`, `.sav`, `.csv`, `.rds`, `.RData`, and generated output folders.
+
+## Requirements
+
+Core packages depend on which parts of the workflow are used:
+
+- `haven` for reading Stata survey files;
+- `survey` for design-aware model fitting;
+- `lme4` for mixed-effects models;
+- `psych` for tetrachoric index construction, if that option is used.
 
 ## License
 
