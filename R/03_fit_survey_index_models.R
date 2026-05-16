@@ -2,6 +2,18 @@
 # COMPONENT 3: Survey index modelling
 # ============================================================
 
+if (!exists("require_package")) {
+  require_package <- function(pkg) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      stop(sprintf("Package '%s' is required but not installed.", pkg), call. = FALSE)
+    }
+  }
+}
+
+if (!exists("%||%")) {
+  `%||%` <- function(x, y) if (is.null(x)) y else x
+}
+
 survey_design_ids <- function(weight, psu = NULL, strata = NULL) {
   list(weight = weight, psu = psu, strata = strata)
 }
@@ -94,9 +106,15 @@ coerce_model_variables <- function(data, numeric_vars = character(0), factor_var
   list(data = data, messages = messages)
 }
 
-screen_model_data <- function(data, outcome_var, predictors, ids = NULL) {
+screen_model_data <- function(data, outcome_var, predictors, ids = survey_design_ids(weight = NULL)) {
   needed <- unique(c(outcome_var, predictors, ids$weight, ids$psu, ids$strata))
-  needed <- needed[!is.null(needed) & needed %in% names(data)]
+  needed <- needed[!is.na(needed) & nzchar(needed) & needed %in% names(data)]
+
+  missing_needed <- setdiff(unique(c(outcome_var, predictors)), names(data))
+  if (length(missing_needed) > 0) {
+    stop(sprintf("Missing model variable(s): %s", paste(missing_needed, collapse = ", ")), call. = FALSE)
+  }
+
   complete <- stats::complete.cases(data[, needed, drop = FALSE])
   list(
     data = data[complete, , drop = FALSE],
